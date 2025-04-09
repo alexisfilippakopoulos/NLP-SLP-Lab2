@@ -1,0 +1,8 @@
+lab2-prep/__pycache__/
+lab2-prep/datasets/
+lab2-prep/embeddings/
+lab2-prep/utils/__pycache__/
+lab2-main/__pycache__/
+lab2-main/datasets/
+lab2-main/embeddings/
+lab2-main/utils/__pycache__/
