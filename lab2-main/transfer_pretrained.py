@@ -4,27 +4,42 @@ from tqdm import tqdm
 from utils.load_datasets import load_MR, load_Semeval2017A
 from training import get_metrics_report
 
-# DATASET = 'MR'
-# PRETRAINED_MODEL = 'siebert/sentiment-roberta-large-english'
+# Options: 'MR' or 'Semeval2017A'
+# DATASET = 'Semeval2017A'
+DATASET = 'MR'
 
-DATASET = 'Semeval2017A'
-PRETRAINED_MODEL = 'cardiffnlp/twitter-roberta-base-sentiment'
-
-
-LABELS_MAPPING = {
+MODEL_CONFIGS = {
+    # For MR Dataset
     'siebert/sentiment-roberta-large-english': {
-        'POSITIVE': 'positive',
-        'NEGATIVE': 'negative',
+        'labels': {'POSITIVE': 'positive', 'NEGATIVE': 'negative'},
+        'dataset': 'MR',
     },
+    'textattack/bert-base-uncased-imdb': {
+        'labels': {'LABEL_1': 'positive', 'LABEL_0': 'negative'},
+        'dataset': 'MR',
+    },
+    'distilbert-base-uncased-finetuned-sst-2-english': {
+        'labels': {'POSITIVE': 'positive', 'NEGATIVE': 'negative'},
+        'dataset': 'MR',
+    },
+
+    # For Semeval2017A Dataset
     'cardiffnlp/twitter-roberta-base-sentiment': {
-        'LABEL_0': 'negative',
-        'LABEL_1': 'neutral',
-        'LABEL_2': 'positive',
-    }
+        'labels': {'LABEL_0': 'negative', 'LABEL_1': 'neutral', 'LABEL_2': 'positive'},
+        'dataset': 'Semeval2017A',
+    },
+    'cardiffnlp/twitter-xlm-roberta-base-sentiment': {
+        'labels': {'negative': 'negative', 'neutral': 'neutral', 'positive': 'positive'},
+        'dataset': 'Semeval2017A',
+    },
+    'finiteautomata/bertweet-base-sentiment-analysis': {
+        'labels': {'NEG': 'negative', 'NEU': 'neutral', 'POS': 'positive'},
+        'dataset': 'Semeval2017A',
+    },
 }
 
 if __name__ == '__main__':
-    # load the raw data
+    # load the dataset
     if DATASET == "Semeval2017A":
         X_train, y_train, X_test, y_test = load_Semeval2017A()
     elif DATASET == "MR":
@@ -37,18 +52,20 @@ if __name__ == '__main__':
     le.fit(list(set(y_train)))
     y_train = le.transform(y_train)
     y_test = le.transform(y_test)
-    n_classes = len(list(le.classes_))
 
-    # define a proper pipeline
-    sentiment_pipeline = pipeline("sentiment-analysis", model=PRETRAINED_MODEL)
+    models_to_run = {
+        name: cfg for name, cfg in MODEL_CONFIGS.items() if cfg['dataset'] == DATASET
+    }
+    # run the experiments
+    for model_name, cfg in models_to_run.items():
+        print(f"\nRunning model: {model_name}")
+        sentiment_pipeline = pipeline("sentiment-analysis", model=model_name)
 
-    y_pred = []
-    print(f"Evaluating {PRETRAINED_MODEL} on {DATASET}")
-    for x in tqdm(X_test):
-        # TODO: Main-lab-Q6 - get the label using the defined pipeline 
-        result = sentiment_pipeline(x)[0]
-        label = result['label']
-        y_pred.append(LABELS_MAPPING[PRETRAINED_MODEL][label])
-
-    y_pred = le.transform(y_pred)
-    print(f'\nDataset: {DATASET}\nPre-Trained model: {PRETRAINED_MODEL}\nTest set evaluation\n{get_metrics_report([y_test], [y_pred])}')
+        y_pred_labels = []
+        for x in tqdm(X_test, desc=f"Inferencing with {model_name}"):
+            result = sentiment_pipeline(x)[0]
+            label = result['label']
+            mapped_label = cfg['labels'][label]
+            y_pred_labels.append(mapped_label)
+        y_pred = le.transform(y_pred_labels)
+        print(f'\nDataset: {DATASET}\nModel: {model_name}\nTest Set Evaluation:\n{get_metrics_report(y_test, y_pred)}')
