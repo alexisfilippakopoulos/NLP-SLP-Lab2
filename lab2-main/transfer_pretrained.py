@@ -45,7 +45,8 @@ if __name__ == '__main__':
     y_pred = []
     for x in tqdm(X_test):
         # TODO: Main-lab-Q6 - get the label using the defined pipeline 
-        label = ...        
+        result = sentiment_pipeline(x)[0]
+        label = result['label']
         y_pred.append(LABELS_MAPPING[PRETRAINED_MODEL][label])
 
     y_pred = le.transform(y_pred)
