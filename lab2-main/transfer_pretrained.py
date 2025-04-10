@@ -43,6 +43,7 @@ if __name__ == '__main__':
     sentiment_pipeline = pipeline("sentiment-analysis", model=PRETRAINED_MODEL)
 
     y_pred = []
+    print(f"Evaluating {PRETRAINED_MODEL} on {DATASET}")
     for x in tqdm(X_test):
         # TODO: Main-lab-Q6 - get the label using the defined pipeline 
         result = sentiment_pipeline(x)[0]
