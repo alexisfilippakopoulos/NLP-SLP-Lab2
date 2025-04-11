@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from utils.load_datasets import load_MR, load_Semeval2017A
 import argparse
 import torch
+from transformers import EarlyStoppingCallback
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -106,7 +107,7 @@ if __name__ == '__main__':
             output_dir=f"output/{model_name.replace('/', '_')}",
             evaluation_strategy="epoch",
             save_strategy="epoch",
-            num_train_epochs=2,
+            num_train_epochs=20,
             learning_rate=1e-5,
             weight_decay=0.01,
             per_device_train_batch_size=8,
@@ -122,6 +123,7 @@ if __name__ == '__main__':
             train_dataset=tokenized_train_set,
             eval_dataset=tokenized_valid_set,
             compute_metrics=compute_metrics,
+            callbacks=[EarlyStoppingCallback(early_stopping_patience=5)]
         )
 
         trainer.train()
