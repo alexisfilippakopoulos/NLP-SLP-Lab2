@@ -56,6 +56,7 @@ def compute_metrics(eval_pred):
 
 def tokenize_function(examples):
     model_max_length = tokenizer.model_max_length if tokenizer.model_max_length is not None else 128
+    model_max_length = min(tokenizer.model_max_length or 128, 512)
     return tokenizer(examples["text"], padding="max_length", truncation=True, max_length=model_max_length)
 
 def prepare_dataset(X, y):
@@ -97,11 +98,16 @@ if __name__ == '__main__':
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         model = AutoModelForSequenceClassification.from_pretrained(model_name, num_labels=n_classes).to(device)
 
+        tokenized_train_set = train_set.map(tokenize_function)
+        tokenized_valid_set = valid_set.map(tokenize_function)
+        tokenized_test_set = test_set.map(tokenize_function)
 
-        tokenized_train_set = train_set.map(lambda ex: tokenize_function(ex, tokenizer))
-        tokenized_valid_set = valid_set.map(lambda ex: tokenize_function(ex, tokenizer))
-        tokenized_test_set = test_set.map(lambda ex:    tokenize_function(ex, tokenizer))
-
+        n_samples = 40
+        small_train_dataset = tokenized_train_set.shuffle(
+            seed=42).select(range(n_samples))
+        small_eval_dataset = tokenized_test_set.shuffle(
+            seed=42).select(range(n_samples))
+        
         args = TrainingArguments(
             output_dir=f"output/{model_name.replace('/', '_')}",
             evaluation_strategy="epoch",
@@ -119,13 +125,13 @@ if __name__ == '__main__':
         trainer = Trainer(
             model=model,
             args=args,
-            train_dataset=tokenized_train_set,
-            eval_dataset=tokenized_valid_set,
+            train_dataset=small_train_dataset,
+            eval_dataset=small_eval_dataset,
             compute_metrics=compute_metrics,
         )
 
         trainer.train()
-        test_metrics = trainer.evaluate(eval_dataset=tokenized_test_set)
+        test_metrics = trainer.evaluate(eval_dataset=small_eval_dataset)
         results_summary[model_name] = test_metrics
         print(f"{model_name} Accuracy: {test_metrics['eval_accuracy']:.4f}")
 
