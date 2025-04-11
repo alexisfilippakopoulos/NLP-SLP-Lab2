@@ -50,7 +50,6 @@ if __name__ == '__main__':
     # encode labels
     le = LabelEncoder()
     le.fit(list(set(y_train)))
-    y_train = le.transform(y_train)
     y_test = le.transform(y_test)
 
     models_to_run = {
