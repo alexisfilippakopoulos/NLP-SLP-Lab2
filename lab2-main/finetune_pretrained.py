@@ -5,6 +5,7 @@ from transformers import TrainingArguments, Trainer, AutoTokenizer, AutoModelFor
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from utils.load_datasets import load_MR, load_Semeval2017A
+from sklearn.metrics import classification_report
 import argparse
 import torch
 from transformers import EarlyStoppingCallback
@@ -102,12 +103,18 @@ if __name__ == '__main__':
         tokenized_train_set = train_set.map(tokenize_function)
         tokenized_valid_set = valid_set.map(tokenize_function)
         tokenized_test_set = test_set.map(tokenize_function)
+
+        n_samples = 40
+        small_train_dataset = tokenized_train_set.shuffle(
+            seed=42).select(range(n_samples))
+        small_eval_dataset = tokenized_test_set.shuffle(
+            seed=42).select(range(n_samples))
         
         args = TrainingArguments(
             output_dir=f"output/{model_name.replace('/', '_')}",
-            evaluation_strategy="epoch",
+            eval_strategy="epoch",
             save_strategy="epoch",
-            num_train_epochs=20,
+            num_train_epochs=1,
             learning_rate=1e-5,
             weight_decay=0.01,
             per_device_train_batch_size=8,
@@ -120,20 +127,14 @@ if __name__ == '__main__':
         trainer = Trainer(
             model=model,
             args=args,
-            train_dataset=tokenized_train_set,
-            eval_dataset=tokenized_valid_set,
+            train_dataset=small_train_dataset,
+            eval_dataset=small_eval_dataset,
             compute_metrics=compute_metrics,
             callbacks=[EarlyStoppingCallback(early_stopping_patience=5)]
         )
 
         trainer.train()
-        test_metrics = trainer.evaluate(eval_dataset=tokenized_test_set)
-        results_summary[model_name] = test_metrics
-        print(f"{model_name} Accuracy: {test_metrics['eval_accuracy']:.4f}")
-
-    # final summary
-    print("\nFinal Evaluation Summary:")
-    print(f"{'Model':<60} {'Accuracy':>10}")
-    print("-" * 72)
-    for model_name, metrics in results_summary.items():
-        print(f"{model_name:<60} {metrics['eval_accuracy']:.4f}")
+        predictions = trainer.predict(tokenized_test_set)
+        preds = np.argmax(predictions.predictions, axis=-1)
+        y_true = predictions.label_ids
+        print(classification_report(y_true, preds))
