@@ -22,8 +22,8 @@ DATASET = args.dataset
 metric = evaluate.load("accuracy")
 
 MODEL_CONFIGS = {
-    'siebert/sentiment-roberta-large-english': {
-        'labels': {'POSITIVE': 'positive', 'NEGATIVE': 'negative'},
+    'huawei-noah/TinyBERT_General_4L_312D': {
+        'labels': {'LABEL_1': 'positive', 'LABEL_0': 'negative'},
         'dataset': 'MR',
     },
     'textattack/bert-base-uncased-imdb': {
@@ -38,7 +38,7 @@ MODEL_CONFIGS = {
         'labels': {'LABEL_0': 'negative', 'LABEL_1': 'neutral', 'LABEL_2': 'positive'},
         'dataset': 'Semeval2017A',
     },
-    'cardiffnlp/twitter-xlm-roberta-base-sentiment': {
+    'mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis': {
         'labels': {'negative': 'negative', 'neutral': 'neutral', 'positive': 'positive'},
         'dataset': 'Semeval2017A',
     },
@@ -103,12 +103,6 @@ if __name__ == '__main__':
         tokenized_train_set = train_set.map(tokenize_function)
         tokenized_valid_set = valid_set.map(tokenize_function)
         tokenized_test_set = test_set.map(tokenize_function)
-
-        n_samples = 40
-        small_train_dataset = tokenized_train_set.shuffle(
-            seed=42).select(range(n_samples))
-        small_eval_dataset = tokenized_test_set.shuffle(
-            seed=42).select(range(n_samples))
         
         args = TrainingArguments(
             output_dir=f"output/{model_name.replace('/', '_')}",
@@ -127,8 +121,8 @@ if __name__ == '__main__':
         trainer = Trainer(
             model=model,
             args=args,
-            train_dataset=small_train_dataset,
-            eval_dataset=small_eval_dataset,
+            train_dataset=tokenized_train_set,
+            eval_dataset=tokenized_valid_set,
             compute_metrics=compute_metrics,
             callbacks=[EarlyStoppingCallback(early_stopping_patience=5)]
         )
