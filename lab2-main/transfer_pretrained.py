@@ -9,9 +9,8 @@ from training import get_metrics_report
 DATASET = 'MR'
 
 MODEL_CONFIGS = {
-    # For MR Dataset
-    'siebert/sentiment-roberta-large-english': {
-        'labels': {'POSITIVE': 'positive', 'NEGATIVE': 'negative'},
+    'huawei-noah/TinyBERT_General_4L_312D': {
+        'labels': {'LABEL_1': 'positive', 'LABEL_0': 'negative'},
         'dataset': 'MR',
     },
     'textattack/bert-base-uncased-imdb': {
@@ -22,13 +21,11 @@ MODEL_CONFIGS = {
         'labels': {'POSITIVE': 'positive', 'NEGATIVE': 'negative'},
         'dataset': 'MR',
     },
-
-    # For Semeval2017A Dataset
     'cardiffnlp/twitter-roberta-base-sentiment': {
         'labels': {'LABEL_0': 'negative', 'LABEL_1': 'neutral', 'LABEL_2': 'positive'},
         'dataset': 'Semeval2017A',
     },
-    'cardiffnlp/twitter-xlm-roberta-base-sentiment': {
+    'mrm8488/distilroberta-finetuned-financial-news-sentiment-analysis': {
         'labels': {'negative': 'negative', 'neutral': 'neutral', 'positive': 'positive'},
         'dataset': 'Semeval2017A',
     },
