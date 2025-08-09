@@ -37,7 +37,7 @@ Compare with multi-head attention and experiment with parameters
 Evaluate at least 3 pre-trained transformer models
 Compare their out-of-the-box performance on sentiment classification
 
-7. Fine-tuning (Question 7)
+7. Fine-tuning
 
 Fine-tune pre-trained models on the specific sentiment dataset
 Use Google Colab for computational resources
